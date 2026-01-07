@@ -41,7 +41,7 @@ export function PresaleInvestmentCard() {
   const { isSuccess: txSuccess, isLoading: txLoading } = useWaitForTransactionReceipt({ hash })
 
   // 合约汇率：1 BNB = 800,000 DWIN
-  const RATE = 800_000
+  const RATE = 500_000
   const MIN_INVEST = 0.1
 
   const calculateTokens = (bnbAmount: string): string => {

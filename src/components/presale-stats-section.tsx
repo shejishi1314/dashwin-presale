@@ -29,7 +29,7 @@ export function PresaleStatsSection() {
   const totalTokensSold = totalSoldRaw ? Number(totalSoldRaw) / 1e18 : 0
 
   // 目标金额（你的页面是 500 BNB）
-  const targetRaised = 500
+  const targetRaised = 1000
   const progress = totalRaised > 0 ? Math.min((totalRaised / targetRaised) * 100, 100) : 0
 
   // 格式化大数字（带千分位）
