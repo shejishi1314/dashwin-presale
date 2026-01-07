@@ -1,0 +1,21 @@
+{
+  "name": "DashWin",
+  "short_name": "DashWin",
+  "description": "一站式去中心化交易所 - 集现货swap、永续合约、AI量化、预测和Gamefi于一体",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#3B82F6",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
