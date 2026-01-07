@@ -15,9 +15,9 @@ export function ContractInfoSection() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
 
   const CONTRACTS = [
-    { name: t("contract.referral"), address: "0x1234567890123456789012345678901234567890" },
-    { name: t("contract.presale"), address: "0x2345678901234567890123456789012345678901" },
-    { name: t("contract.token"), address: "0x3456789012345678901234567890123456789012" },
+    { name: t("contract.referral"), address: "0x2877C05cFe4eAfEa191c339Aa574d3A15f9C309A" },
+    { name: t("contract.presale"), address: "0x2BA81219eb9fbff448231688E1354ac96c373109" },
+    { name: t("contract.token"), address: "00xcf998D5e65eCC44EA6c41883EB89A06fE769068A" },
   ]
 
   const truncateAddress = (address: string) => {

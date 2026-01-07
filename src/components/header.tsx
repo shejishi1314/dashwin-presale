@@ -65,7 +65,7 @@ export function Header() {
 
                 {/* Open APP Button */}
                 <a
-                  href="https://darwindex.org/perp/PERP_ETH_USDC"
+                  href="https://dashwin.org/perp/PERP_ETH_USDC"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-blue-400 p-3 font-medium text-primary-foreground transition-opacity hover:opacity-90"
