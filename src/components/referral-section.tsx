@@ -188,7 +188,7 @@ function ReferralItem({ refAddress }: { refAddress: `0x${string}` }) {
   })
 
   const purchasedDWIN = Number(purchasedDWINRaw) / 1e18
-  const investedBNB = purchasedDWIN / 800_000
+  const investedBNB = purchasedDWIN / 500_000
   const rewardDWIN = purchasedDWIN * 0.1
 
   return (
