@@ -23,6 +23,17 @@ export function ReferralSection() {
     ? `${typeof window !== "undefined" ? window.location.origin : ""}?inviter=${address}`
     : ""
 
+  // 用户自己的投资金额（DWIN数量）
+  const { data: myPurchasedRaw = 0n } = useReadContract({
+    address: PRESALE_ADDRESS,
+    abi: PRESALE_ABI,
+    functionName: "purchasedAmount",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  })
+  const myPurchasedDWIN = Number(myPurchasedRaw) / 1e18
+  const hasInvested = myPurchasedDWIN > 0 // 投入成功（有购买DWIN）则显示
+
   // 邀请人数
   const { data: referralCountRaw = 0n } = useReadContract({
     address: REFERRAL_BINDING_ADDRESS,
@@ -56,50 +67,19 @@ export function ReferralSection() {
   const displayedReferrals = showAll ? referrals : referrals.slice(0, 10)
 
   const handleCopyLink = async () => {
-  if (!referralLink) {
-    toast({
-      title: "链接为空",
-      description: "请先连接钱包",
-      variant: "destructive",
-      duration: 4000,
-    })
-    return
-  }
-
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
+    if (!referralLink) return
+    try {
       await navigator.clipboard.writeText(referralLink)
-    } else {
-      // fallback for old browsers or non-HTTPS
-      const textArea = document.createElement("textarea")
-      textArea.value = referralLink
-      textArea.style.position = "fixed"
-      textArea.style.opacity = "0"
-      document.body.appendChild(textArea)
-      textArea.focus()
-      textArea.select()
-      document.execCommand("copy")
-      document.body.removeChild(textArea)
+      setCopied(true)
+      toast({ title: "复制成功！" })
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast({ title: "复制失败", variant: "destructive" })
     }
-
-    setCopied(true)
-    toast({
-      title: "复制成功！",
-      duration: 3000,
-    })
-    setTimeout(() => setCopied(false), 2000)
-  } catch (err) {
-    console.error("复制失败", err)
-    toast({
-      title: "复制失败",
-      description: "请手动复制链接",
-      variant: "destructive",
-      duration: 5000,
-    })
-  }
   }
 
-  if (!isConnected || !address || referralCount === 0) {
+  // 修改这里：只有投入成功（自己购买了DWIN）才显示推荐模块
+  if (!isConnected || !address || !hasInvested) {
     return null
   }
 
@@ -138,28 +118,33 @@ export function ReferralSection() {
         </div>
 
         {/* 邀请列表 */}
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">
-            被邀请人列表（共 {referralCount} 人）
-          </p>
+        {referralCount > 0 ? (
           <div className="space-y-2">
-            {displayedReferrals.map((refAddress, index) => (
-              <ReferralItem key={`${refAddress}-${index}`} refAddress={refAddress} />
-            ))}
-          </div>
+            <p className="text-sm font-medium text-muted-foreground">
+              被邀请人列表（共 {referralCount} 人）
+            </p>
+            <div className="space-y-2">
+              {displayedReferrals.map((refAddress, index) => (
+                <ReferralItem key={`${refAddress}-${index}`} refAddress={refAddress} />
+              ))}
+            </div>
 
-          {/* 查看更多按钮 */}
-          {referrals.length > 10 && (
-            <Button
-              variant="ghost"
-              className="w-full gap-2"
-              onClick={() => setShowAll(!showAll)}
-            >
-              {showAll ? "收起" : "查看更多"}
-              <ChevronDown className={cn("h-4 w-4 transition-transform", showAll && "rotate-180")} />
-            </Button>
-          )}
-        </div>
+            {referrals.length > 10 && (
+              <Button
+                variant="ghost"
+                className="w-full gap-2"
+                onClick={() => setShowAll(!showAll)}
+              >
+                {showAll ? "收起" : "查看更多"}
+                <ChevronDown className={cn("h-4 w-4 transition-transform", showAll && "rotate-180")} />
+              </Button>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            暂无邀请记录，分享链接赚取奖励吧！
+          </p>
+        )}
 
         {/* 分享按钮 */}
         <div className="grid grid-cols-3 gap-2">
@@ -193,7 +178,7 @@ export function ReferralSection() {
   )
 }
 
-// 子组件：每个邀请人详情
+// 子组件：每个邀请人详情（保持不变）
 function ReferralItem({ refAddress }: { refAddress: `0x${string}` }) {
   const { data: purchasedDWINRaw = 0n } = useReadContract({
     address: PRESALE_ADDRESS,
@@ -202,9 +187,9 @@ function ReferralItem({ refAddress }: { refAddress: `0x${string}` }) {
     args: [refAddress],
   })
 
-  const purchasedDWIN = Number(purchasedDWINRaw) / 1e18 // DWIN 数量
-  const investedBNB = purchasedDWIN / 800_000 // 反算投资 BNB
-  const rewardDWIN = purchasedDWIN * 0.1 // 10% 奖励
+  const purchasedDWIN = Number(purchasedDWINRaw) / 1e18
+  const investedBNB = purchasedDWIN / 800_000
+  const rewardDWIN = purchasedDWIN * 0.1
 
   return (
     <div className="flex items-center justify-between rounded-xl border border-border bg-secondary p-3">
