@@ -1,5 +1,5 @@
 export const REFERRAL_BINDING_ADDRESS = '0x2877C05cFe4eAfEa191c339Aa574d3A15f9C309A'; // 填部署后的地址
-export const PRESALE_ADDRESS = '0x2BA81219eb9fbff448231688E1354ac96c373109'; // 填部署后的地址
+export const PRESALE_ADDRESS = '0x7358Ed1d29542c7Fd3E8EE017914e2909CFBc3b7'; // 填部署后的地址
 
 export const REFERRAL_ABI = [
   {
