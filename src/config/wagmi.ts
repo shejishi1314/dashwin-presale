@@ -34,9 +34,9 @@ const bscMainnet = {
 export const wagmiConfig = getDefaultConfig({
   appName: 'DashWin Presale',
   projectId,
-  chains: [bsc], // 测试时用这个自定义的，上主网时改成 [bsc]
+  chains: [bscMainnet], // 测试时用这个自定义的，上主网时改成 [bsc]
   transports: {
-    [bsc.id]: http(), // 自动使用上面定义的 rpcUrls，支持 fallback
+    [bscMainnet.id]: http(), // 自动使用上面定义的 rpcUrls，支持 fallback
   },
   ssr: true,
 });

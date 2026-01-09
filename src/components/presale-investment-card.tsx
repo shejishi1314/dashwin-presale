@@ -8,13 +8,15 @@ import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi"
+import { useQueryClient } from "@tanstack/react-query" // 新增：用于局部刷新数据
 import { REFERRAL_BINDING_ADDRESS, REFERRAL_ABI, PRESALE_ADDRESS, PRESALE_ABI } from "@/constants/contracts"
-import { parseEther, formatEther } from "viem"
+import { parseEther } from "viem"
 import { useLanguage } from "@/lib/language-context"
 
 export function PresaleInvestmentCard() {
   const { address, isConnected } = useAccount()
   const { t } = useLanguage()
+  const queryClient = useQueryClient() // 获取 react-query 客户端，用于刷新数据
 
   const [amount, setAmount] = useState("")
   const [error, setError] = useState("")
@@ -40,16 +42,16 @@ export function PresaleInvestmentCard() {
   const { writeContract, data: hash, isPending: isInvesting } = useWriteContract()
   const { isSuccess: txSuccess, isLoading: txLoading } = useWaitForTransactionReceipt({ hash })
 
-  // 合约汇率：1 BNB = 800,000 DWIN
+  // 合约汇率：1 BNB = 500,000 DWIN（根据你的代码）
   const RATE = 500_000
   const MIN_INVEST = 0.1
 
   const calculateTokens = (bnbAmount: string): string => {
-  const bnb = Number.parseFloat(bnbAmount) || 0
-  const tokens = bnb * RATE
-  const formatted = tokens.toLocaleString(undefined, { maximumFractionDigits: 0 })
-  return formatted + " DWIN"  // 直接拼接，确保永远是 string
-}
+    const bnb = Number.parseFloat(bnbAmount) || 0
+    const tokens = bnb * RATE
+    const formatted = tokens.toLocaleString(undefined, { maximumFractionDigits: 0 })
+    return formatted + " DWIN"
+  }
 
   const adjustAmount = (delta: number) => {
     const current = Number.parseFloat(amount) || 0
@@ -57,9 +59,9 @@ export function PresaleInvestmentCard() {
     setAmount(newAmount % 1 === 0 ? newAmount.toString() : newAmount.toFixed(1))
   }
 
-  // MAX 功能：这里暂时设一个合理上限（如 100 BNB），或你后续可加读取余额
+  // MAX 功能：暂设 10 BNB（后续可优化为读取余额）
   const setMaxAmount = () => {
-    setAmount("10") // 可后续优化为读取钱包 BNB 余额
+    setAmount("10")
   }
 
   const handleInvest = () => {
@@ -78,21 +80,23 @@ export function PresaleInvestmentCard() {
       abi: PRESALE_ABI,
       functionName: "invest",
       value: parseEther(amount),
-      gas: 300000n, // 购买需要更多 gas（有转账和计算）
+      gas: 300000n,
     })
   }
 
-  // 交易成功处理
- useEffect(() => {
-  if (txSuccess) {
-    setSuccess(true)
-    setAmount("")
-    refetchBound?.() // 刷新绑定状态（可选）
+  // 交易成功处理：不再全局刷新页面，只局部刷新数据
+  useEffect(() => {
+    if (txSuccess) {
+      setSuccess(true)
+      setAmount("")
 
-    // 新增：购买成功后强制刷新整个页面，确保所有数据实时更新
-    window.location.reload()
-  }
- }, [txSuccess, refetchBound])
+      // 局部刷新所有 wagmi/react-query 数据（包括投资金额、奖励、进度等）
+      queryClient.invalidateQueries()
+
+      // 可选：额外手动刷新绑定状态（保险）
+      refetchBound?.()
+    }
+  }, [txSuccess, queryClient, refetchBound])
 
   const canInvest = isConnected && isBound && saleActive
 
@@ -161,7 +165,7 @@ export function PresaleInvestmentCard() {
         {amount && Number.parseFloat(amount) >= MIN_INVEST && (
           <div className="rounded-xl border border-primary/30 bg-primary/10 p-4 text-center">
             <p className="text-sm text-muted-foreground">{t("invest.youWillReceive")}</p>
-            <p className="text-2xl font-bold text-primary">{calculateTokens(amount)} </p>
+            <p className="text-2xl font-bold text-primary">{calculateTokens(amount)}</p>
           </div>
         )}
 
