@@ -15,7 +15,7 @@ export function ContractInfoSection() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
 
   const CONTRACTS = [
-    { name: t("contract.token"), address: "00xcf998D5e65eCC44EA6c41883EB89A06fE769068A" },
+    { name: t("contract.token"), address: "0xcf998D5e65eCC44EA6c41883EB89A06fE769068A" },
   ]
 
   const truncateAddress = (address: string) => {
