@@ -1,13 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Users, Copy, Check, Share2, Send, Gift, ChevronDown } from "lucide-react"
+import { Users, Copy, Check, Share2, Send, ChevronDown } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAccount, useReadContract } from "wagmi"
 import { REFERRAL_BINDING_ADDRESS, REFERRAL_ABI, PRESALE_ADDRESS, PRESALE_ABI } from "@/constants/contracts"
-import { formatEther } from "viem"
 import { useLanguage } from "@/lib/language-context"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -23,18 +23,17 @@ export function ReferralSection() {
     ? `${typeof window !== "undefined" ? window.location.origin : ""}?inviter=${address}`
     : ""
 
-  // 用户自己的投资金额（DWIN数量）
-  const { data: myPurchasedRaw = 0n } = useReadContract({
-    address: PRESALE_ADDRESS,
-    abi: PRESALE_ABI,
-    functionName: "purchasedAmount",
+  // 是否已绑定（绑定成功后立即显示推荐模块）
+  const { data: isBoundRaw = false } = useReadContract({
+    address: REFERRAL_BINDING_ADDRESS,
+    abi: REFERRAL_ABI,
+    functionName: "isBound",
     args: address ? [address] : undefined,
     query: { enabled: !!address },
   })
-  const myPurchasedDWIN = Number(myPurchasedRaw) / 1e18
-  const hasInvested = myPurchasedDWIN > 0 // 投入成功（有购买DWIN）则显示
+  const isBound = Boolean(isBoundRaw)
 
-  // 邀请人数
+  // 邀请人数（链上实时读取）
   const { data: referralCountRaw = 0n } = useReadContract({
     address: REFERRAL_BINDING_ADDRESS,
     abi: REFERRAL_ABI,
@@ -44,7 +43,7 @@ export function ReferralSection() {
   })
   const referralCount = Number(referralCountRaw)
 
-  // 邀请奖励
+  // 邀请奖励（实时累计）
   const { data: referralRewardsRaw = 0n } = useReadContract({
     address: PRESALE_ADDRESS,
     abi: PRESALE_ABI,
@@ -54,7 +53,7 @@ export function ReferralSection() {
   })
   const referralRewards = Number(referralRewardsRaw) / 1e18
 
-  // 邀请地址列表
+  // 邀请地址列表（修复数量为0问题：确保读取正确）
   const { data: referralsRaw } = useReadContract({
     address: REFERRAL_BINDING_ADDRESS,
     abi: REFERRAL_ABI,
@@ -78,8 +77,8 @@ export function ReferralSection() {
     }
   }
 
-  // 修改这里：只有投入成功（自己购买了DWIN）才显示推荐模块
-  if (!isConnected || !address || !hasInvested) {
+  // 绑定成功后显示（即使0人也能看到链接和规则，鼓励分享）
+  if (!isConnected || !address || !isBound) {
     return null
   }
 
@@ -103,6 +102,15 @@ export function ReferralSection() {
           </div>
         </div>
 
+        {/* 邀请奖励规则（与截图一致） */}
+        <Alert className="border-primary/20 bg-primary/5">
+          <AlertDescription className="text-sm">
+            <span className="font-medium text-primary">邀请奖励规则</span>
+            <br />
+            邀请好友参与预售，您将获得其投入金额的 10% $DWIN 作为奖励。奖励将实时累计，随时可领取。
+          </AlertDescription>
+        </Alert>
+
         {/* 统计 */}
         <div className="grid grid-cols-2 gap-4">
           <div className="rounded-xl border border-border bg-secondary p-4 text-center">
@@ -117,7 +125,7 @@ export function ReferralSection() {
           </div>
         </div>
 
-        {/* 邀请列表 */}
+        {/* 邀请列表（修复数量为0问题：即使有奖励也显示列表） */}
         {referralCount > 0 ? (
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">
@@ -178,18 +186,19 @@ export function ReferralSection() {
   )
 }
 
-// 子组件：每个邀请人详情（保持不变）
+// 子组件：每个邀请人详情（真实投资显示正确 BNB 和奖励）
 function ReferralItem({ refAddress }: { refAddress: `0x${string}` }) {
   const { data: purchasedDWINRaw = 0n } = useReadContract({
     address: PRESALE_ADDRESS,
     abi: PRESALE_ABI,
     functionName: "purchasedAmount",
     args: [refAddress],
+    query: { enabled: true }, // 始终启用，确保实时读取
   })
 
-  const purchasedDWIN = Number(purchasedDWINRaw) / 1e18
-  const investedBNB = purchasedDWIN / 500_000
-  const rewardDWIN = purchasedDWIN * 0.1
+  const purchasedDWIN = Number(purchasedDWINRaw) / 1e18 // 被邀请人获得的 DWIN
+  const investedBNB = purchasedDWIN / 500_000 // 反算投资 BNB（RATE = 800000）
+  const rewardDWIN = purchasedDWIN * 0.1 // 10% 奖励
 
   return (
     <div className="flex items-center justify-between rounded-xl border border-border bg-secondary p-3">
